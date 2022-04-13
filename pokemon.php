@@ -23,7 +23,7 @@
   }
   $user_data = mysqli_fetch_assoc($user_rs);
   $user_data = json_decode($user_data['data'], true);
-  if (!isset($_GET['query'])) {
+  if (!strlen($_GET['query'])) {
     // try to catch Pokemon
     $win_probabilty = 50;
     $try = rand(0,100);
