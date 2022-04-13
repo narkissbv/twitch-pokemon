@@ -7,7 +7,6 @@
   header("Pragma: no-cache");
 
   include_once('db_connect.php');
-  include_once('config.php');
 
   if (!isset($_GET['username'])) {
     die('Error: missing username');
@@ -15,39 +14,65 @@
   $username = mysqli_real_escape_string($link, $_GET['username']);
 
   // create new record for new users
-  $sql = "SELECT * FROM `points` WHERE username={$username}";
+  $sql = "SELECT * FROM `pokemons` WHERE username='$username'";
   $user_rs = mysqli_query($link, $sql);
   if (mysqli_num_rows($user_rs) == 0) {
     // create new user record
-    $sql = "INSERT INTO `points` (username, amount) VALUES ('$username', $daily_reward)";
+    $sql = "INSERT INTO `pokemons` (username) VALUES ('$username')";
     mysqli_query($link, $sql);
-  }    
-
-  // try to catch Pokemon
-  $win_probabilty = 50;
-  $bet = rand(0,100);
-  if ($bet <= $win_probabilty) {
-    // catch success
-  } else {
-    // catch fail
   }
-
+  $user_data = mysqli_fetch_assoc($user_rs);
+  $user_data = json_decode($user_data['data'], true);
   if (!isset($_GET['query'])) {
-    die()
+    // try to catch Pokemon
+    $win_probabilty = 50;
+    $try = rand(0,100);
+    if ($try <= $win_probabilty) {
+      // catch success
+      // check whether user has an empty slot
+      if (count($user_data) >= 10) {
+        die("You already have 10 pokemons. Release some and try again...");
+      }
+      $pokemons_list = json_decode(file_get_contents('pokemons.json'), true);
+      $pokemon_caught = rand(0,count($pokemons_list['pokemons']) - 1);
+      array_push($user_data, $pokemons_list['pokemons'][$pokemon_caught]);
+      save_data($user_data, $username, $link);
+      die("Yeah, $username! You caught " . $pokemons_list['pokemons'][$pokemon_caught] . '! :)');
+    } 
+    // catch fail
+    die("Oh snap, $username! Pokemon got away... :(");
   }
-  
-  $query = mysqli_real_escape_string($link, $_GET['query']);
 
-  switch($action) {
+  $query = explode(" ", $_GET['query']);
+  switch($query[0]) {
     case 'list':
-
-      break;
+      echo "$username's pokemons: ";
+      if (count($user_data) <= 0) {
+        die('No pokemons. Try catching some!');
+      }
+      foreach($user_data as $key => $value) {
+        echo $key + 1 . ": $value, ";
+      }
+      die();
     case 'release':
-
-      break;
+      if (!$query[1]) {
+        die('Error: Missing pokemon number...');
+      }
+      if ($query[1] < 1 || $query[1] > count($user_data)) {
+        die("Error: out of range");
+      }
+      $pokemon_index = $query[1] - 1;
+      $pokemon_name = $user_data[$pokemon_index];
+      array_splice($user_data, $pokemon_index, 1);
+      save_data($user_data, $username, $link);
+      die("$username released $pokemon_name. Farewell cute pokemon!");
     default:
-      die('Error: unfamiliar query command');
-      break;
+      die('Error: unfamiliar pokemon command: ' . $query[0]);
   }
 
+  function save_data($user_data, $username, $link) {
+    $user_data = json_encode($user_data);
+    $sql = "UPDATE `pokemons` SET `data` = '$user_data' WHERE username = '$username'";
+    mysqli_query($link, $sql);
+  }
 ?>
