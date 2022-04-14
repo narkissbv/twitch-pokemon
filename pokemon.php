@@ -18,14 +18,14 @@
   $user_rs = mysqli_query($link, $sql);
   if (mysqli_num_rows($user_rs) == 0) {
     // create new user record
-    $sql = "INSERT INTO `pokemons` (username) VALUES ('$username')";
+    $sql = "INSERT INTO `pokemons` (username, data) VALUES ('$username', '[]')";
     mysqli_query($link, $sql);
   }
   $user_data = mysqli_fetch_assoc($user_rs);
   $user_data = json_decode($user_data['data'], true);
   if (!strlen($_GET['query'])) {
     // try to catch Pokemon
-    $win_probabilty = 50;
+    $win_probabilty = 70;
     $try = rand(0,100);
     if ($try <= $win_probabilty) {
       // catch success
@@ -71,6 +71,9 @@
   }
 
   function save_data($user_data, $username, $link) {
+    if ($user_data == null) {
+      $user_data = [];
+    }
     $user_data = json_encode($user_data);
     $sql = "UPDATE `pokemons` SET `data` = '$user_data' WHERE username = '$username'";
     mysqli_query($link, $sql);
