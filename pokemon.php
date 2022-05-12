@@ -1,11 +1,12 @@
 <?php
-  header("Access-Control-Allow-Origin: *");
+  // header("Access-Control-Allow-Origin: *");
   header("Expires: on, 01 Jan 1970 00:00:00 GMT");
   header("Last-Modified: " . gmdate("D, d M Y H:i:s") . " GMT");
   header("Cache-Control: no-store, no-cache, must-revalidate");
   header("Cache-Control: post-check=0, pre-check=0", false);
   header("Pragma: no-cache");
-
+  $http_origin = $_SERVER['HTTP_ORIGIN'];
+  header("Access-Control-Allow-Origin: $http_origin");
   include_once('db_connect.php');
 
   if (!isset($_GET['username'])) {
@@ -46,6 +47,10 @@
   $query = explode(" ", $_GET['query']);
   switch($query[0]) {
     case 'list':
+      if (isset($_GET['mode']) && $_GET['mode'] == 'json') {
+        header('Content-Type: application/json');
+        die(json_encode($user_data));
+      }
       echo "$username's pokemons: ";
       if (count($user_data) <= 0) {
         die('No pokemons. Try catching some!');
@@ -54,6 +59,7 @@
         echo $key + 1 . ": $value, ";
       }
       die();
+
     case 'release':
       if (!$query[1]) {
         die('Error: Missing pokemon number...');
@@ -66,6 +72,22 @@
       array_splice($user_data, $pokemon_index, 1);
       save_data($user_data, $username, $link);
       die("$username released $pokemon_name. Farewell cute pokemon!");
+
+    case 'release_name':
+      if (!$query[1]) {
+        http_response_code(400);
+        die('Error: Missing pokemon name...');
+      }
+      $pokemon_name = $query[1];
+      $pokemon_index = array_search($pokemon_name, $user_data);
+      if ($pokemon_index === false) {
+        http_response_code(404);
+        die("Error: Pokemon $pokemon_name not found");
+      }
+      array_splice($user_data, $pokemon_index, 1);
+      save_data($user_data, $username, $link);
+      die("$username released $pokemon_name. Farewell cute pokemon!");
+
     default:
       die('Error: unfamiliar pokemon command: ' . $query[0]);
   }
