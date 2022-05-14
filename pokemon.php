@@ -38,9 +38,23 @@
       $pokemon_caught = rand(0,count($pokemons_list['pokemons']) - 1);
       array_push($user_data, $pokemons_list['pokemons'][$pokemon_caught]);
       save_data($user_data, $username, $link);
+      if (isset($_GET['mode']) && $_GET['mode'] == 'json') {
+        header('Content-Type: application/json');
+        $resp = array(
+          'success' => true
+        );
+        die(json_encode($resp));
+      }
       die("Yeah, $username! You caught " . $pokemons_list['pokemons'][$pokemon_caught] . '! :)');
-    } 
+    }
     // catch fail
+    if (isset($_GET['mode']) && $_GET['mode'] == 'json') {
+      header('Content-Type: application/json');
+      $resp = array(
+        'success' => false
+      );
+      die(json_encode($resp));
+    }
     die("Oh snap, $username! Pokemon got away... :(");
   }
 
