@@ -26,7 +26,7 @@
   $user_data = json_decode($user_data['data'], true);
   if (!strlen($_GET['query'])) {
     // try to catch Pokemon
-    $win_probabilty = 70;
+    $win_probabilty = 50;
     $try = rand(0,100);
     if ($try <= $win_probabilty) {
       // catch success
@@ -41,7 +41,8 @@
       if (isset($_GET['mode']) && $_GET['mode'] == 'json') {
         header('Content-Type: application/json');
         $resp = array(
-          'success' => true
+          'success' => true,
+          'name' => $pokemons_list['pokemons'][$pokemon_caught]
         );
         die(json_encode($resp));
       }
